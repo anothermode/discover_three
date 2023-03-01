@@ -46,6 +46,8 @@ class World {
 
     loop.updatables.push(book);
 
+    book.name = "book"
+
     scene.add(book);
   }
 
@@ -59,6 +61,15 @@ class World {
 
   render() {
     renderer.render(scene, camera);
+  }
+
+  getObjectByName(name) {
+    return scene.getObjectByName(name);
+  }
+
+  moveObjectSlow(name) {
+    const object = this.getObjectByName(name);
+    object.newPosition.x = 20;
   }
 
 }

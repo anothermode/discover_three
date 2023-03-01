@@ -8,6 +8,16 @@ async function main() {
   await world.init();
 
   world.start();
+
+  // document.querySelector("#scene-container").addEventListener("click", () => {
+  //   const object = world.getObjectByName('book');
+  //   console.log(object);
+  //   object.position.x += 0.5
+  // });
+
+  document.querySelector("#scene-container").addEventListener("click", () => {
+    world.moveObjectSlow("book");
+  })
 }
 
 main().catch((err) => {

@@ -15,10 +15,24 @@ async function createBook() {
   book.position.x = -0.4;
   book.position.y = 0.5;
 
+  book.newPosition = { x: book.position.x, y: book.position.y, z: book.position.y };
+
+
+  const speed = 1;
+
   book.tick = (delta) => {
     book.rotation.x += radiansPerSecond * delta;
     book.rotation.y += radiansPerSecond * delta;
     book.rotation.z += radiansPerSecond * delta;
+
+    if (book.newPosition.x !== book.position.x) {
+      if (Math.abs(book.position.x - book.newPosition.x) < delta * speed) {
+        book.position.x = book.newPosition.x;
+      } else {
+      // incrementally closer to new point
+        book.position.x = delta * speed * Math.sign(book.newPosition.x - book.position.x);
+      }
+    }
   }
 
   return book;
