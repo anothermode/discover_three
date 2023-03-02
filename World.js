@@ -18,7 +18,7 @@ import { createGridHelper } from './Components/gridHelper';
 import { createBox } from './Components/box';
 
 // Utils
-import { degToRad, radToDeg } from 'three/src/math/MathUtils';
+import { degToRad } from 'three/src/math/MathUtils';
 
 import * as TWEEN from '@tweenjs/tween.js';
 
@@ -116,14 +116,16 @@ class World {
     const object = scene.getObjectByName(objectName);
     const coords = { x: object.position.x, y: object.position.y, z: object.position.z };
     const tween = new TWEEN.Tween(coords)
-                .to({ x: object.position.x + translation.x, y: object.position.y + translation.y, z: object.position.z  + translation.z }, 2000)
-                .easing(TWEEN.Easing.Quadratic.Out)
-                .onUpdate(() => {
-                  object.position.set(coords.x, coords.y, coords.z)
-                }).start();
+    .to({ x: object.position.x + translation.x, y: object.position.y + translation.y, z: object.position.z  + translation.z }, 2000)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .onUpdate(() => {
+      object.position.set(coords.x, coords.y, coords.z)
+    }).start();
   }
 
   moveCamera90(direction) {
+    const delta = direction === 'left' ? -10 : 10;
+
     // angle from positive z-axis in degrees
     let angleFromZAxis;
     if (camera.position.z > 0 && camera.position.x > 0) {
@@ -135,14 +137,24 @@ class World {
     } else if (camera.position.z > 0 && camera.position.x <= 0) {
       angleFromZAxis = Number((360 - Math.abs(Math.atan(camera.position.x/camera.position.z)) * 180 / Math.PI).toFixed(4));
     }
+    console.log(angleFromZAxis);
 
-    // find radial length
     const radialLength = Math.sqrt(camera.position.x**2 + camera.position.z**2);
 
-    const delta = direction === 'left' ? -1 : 1;
+    const newAngle = ( angleFromZAxis + delta );
 
-    camera.position.x = Math.sin(degToRad((angleFromZAxis+delta)%360))*radialLength;
-    camera.position.z = Math.cos(degToRad((angleFromZAxis+delta)%360))*radialLength;
+    const angle = { a: angleFromZAxis };
+
+    const tween = new TWEEN.Tween(angle)
+    .to({ a: newAngle }, 2000)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .onUpdate(() => {
+      camera.position.x = Math.sin(degToRad((angle.a)%360))*radialLength;
+      camera.position.z = Math.cos(degToRad((angle.a)%360))*radialLength;
+    }).start();
+
+    // camera.position.x = Math.sin(degToRad((angleFromZAxis+delta)%360))*radialLength;
+    // camera.position.z = Math.cos(degToRad((angleFromZAxis+delta)%360))*radialLength;
   }
 }
 
