@@ -1,54 +1,94 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Loop } from './Loop';
-import { Resizer } from './Resizer';
+import { InteractionManager } from 'three.interactive';
+
+// World setup
+import { Loop } from './systems/Loop';
+import { Resizer } from './systems/Resizer';
+import { createControls} from './systems/controls';
+import { createRenderer } from './systems/renderer';
+import { createStats } from './systems/stats';
 
 // Components
-import { createBook } from './book';
+import { createBook } from './Components/book';
+import { createScene } from './Components/scene';
+import { createCamera } from './Components/camera';
+import { createPointLight } from './Components/light';
+import { createPointLightHelper } from './Components/pointLightHelper'
+import { createGridHelper } from './Components/gridHelper';
+import { createBox } from './Components/box';
+
+// Utils
+import { degToRad, radToDeg } from 'three/src/math/MathUtils';
+
+import * as TWEEN from '@tweenjs/tween.js';
 
 let camera,
     controls,
     renderer,
     scene,
-    loop;
+    loop,
+    stats,
+    interactionManager;
 
 class World {
   constructor(container) {
     // Create camera, scene, renderer in Three
-    camera = new THREE.PerspectiveCamera(70, 1, 0.1, 1000);
-    camera.position.set(0, 1, 3);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    scene = new THREE.Scene();
+    renderer = createRenderer();
+    camera = createCamera({
+      FoV: 70,
+      aspectRatio: renderer.domElement.width/renderer.domElement.height,
+      near: 0.1,
+      far: 1000,
+      position: { x: 0.1, y: 5, z: 10 }
+    });
+    scene = createScene();
     loop = new Loop(camera, scene, renderer);
     // Create canvas element in dom for three.js
     container.append(renderer.domElement);
-    controls = new OrbitControls(camera, renderer.domElement);
-    controls.tick = () => controls.update();
+
+  //  As we create an element that needs to be animated, we push
+  // it to the updatables so its tick function is run
+    controls = createControls(camera, renderer.domElement);
     loop.updatables.push(controls);
 
-    // scene illumination and markers
-    const pointLight = new THREE.PointLight();
-    pointLight.position.set(20,20,20);
-    scene.add(pointLight);
-    const lightHelper = new THREE.PointLightHelper(pointLight);
-    scene.add(lightHelper);
-    const gridHelper = new THREE.GridHelper();
-    scene.add(gridHelper);
+    stats = createStats();
+    loop.updatables.push(stats);
 
-    // resize to window size
+    const pointLight = createPointLight(0xffffff, { x: 20, y: 20, z: 20 });
+    const lightHelper = createPointLightHelper(pointLight);
+    const gridHelper = new createGridHelper();
+    scene.add(pointLight, lightHelper, gridHelper);
     const resizer = new Resizer(container, camera, renderer);
 
-    
+    interactionManager = new InteractionManager(renderer, camera, renderer.domElement);
+    interactionManager.tick = () => interactionManager.update();
+
   }
 
   async init() {
-    const book = await createBook();
+    // const book = await createBook();
+    // book.name = "book"
+    // scene.add(book);
 
-    loop.updatables.push(book);
+    const box1 = createBox({
+      name: "box1",
+      interactionManager: interactionManager,
+      size: 1,
+      color: 'green',
+      position: {x: 0, y: 0, z: 0},
+      rotation: {x: 45, y: 45, z: 45},
+    });
 
-    book.name = "book"
+    const box2 = createBox({
+      name: "box2",
+      interactionManager: interactionManager,
+      size: 1,
+      color: 'yellow',
+      position: {x: 3, y: 0, z: 0},
+      rotation: {x: 45, y: 45, z: 45},
+    });
 
-    scene.add(book);
+    scene.add(box1, box2);
   }
 
   start() {
@@ -63,16 +103,53 @@ class World {
     renderer.render(scene, camera);
   }
 
-  getObjectByName(name) {
-    return scene.getObjectByName(name);
+  move(objectName, translation) {
+    const object = scene.getObjectByName(objectName);
+    const coords = { x: object.position.x, y: object.position.y, z: object.position.z };
+    const tween = new TWEEN.Tween(coords)
+                .to({ x: object.position.x + translation.x, y: object.position.y + translation.y, z: object.position.z  + translation.z }, 2000)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onUpdate(() => {
+                  object.position.set(coords.x, coords.y, coords.z)
+                }).start();
   }
 
-  moveObjectSlow(name) {
-    const object = this.getObjectByName(name);
-    object.newPosition.x = 20;
-  }
+  moveCamera90(direction) {
+    // angle from positive z-axis in degrees
+    let angleFromZAxis;
+    if (camera.position.z > 0 && camera.position.x > 0) {
+      angleFromZAxis = Number((Math.atan(camera.position.x/camera.position.z) * 180 / Math.PI).toFixed(4));
+    } else if (camera.position.z <= 0 && camera.position.x > 0) {
+      angleFromZAxis = Number((180 - Math.abs(Math.atan(camera.position.x/camera.position.z)) * 180 / Math.PI).toFixed(4));
+    } else if (camera.position.z <= 0 && camera.position.x <= 0) {
+      angleFromZAxis = Number((Math.abs(Math.atan(camera.position.x/camera.position.z)) * 180 / Math.PI + 180).toFixed(4));
+    } else if (camera.position.z > 0 && camera.position.x <= 0) {
+      angleFromZAxis = Number((360 - Math.abs(Math.atan(camera.position.x/camera.position.z)) * 180 / Math.PI).toFixed(4));
+    }
+    // add 10 degrees
+    const newAngle = (angleFromZAxis + 10) % 360;
 
+    // find radial length
+    // console.log('cam: ', camera.position.x, camera.position.z);
+    const radialLength = Math.sqrt(camera.position.x**2 + camera.position.z**2);
+
+    // // cos(angle) = z/radial
+    // // sin(angle) = x/radial
+    // const newX = Number(Math.cos(degToRad(newAngle)).toFixed(4))*radialLength;
+    // const newZ = Number(Math.sin(degToRad(newAngle)).toFixed(4))*radialLength;
+  }
 }
 
 export { World };
 
+// TODO Start stop camera animation in three.js
+// TODO control animation with mouse
+// TODO import 3rd party gltf with animation and play with animation handler in three js
+// TODO control animation
+// TODO Simple transform of solid in blender, animation with keyframes. Import and play
+// TODO Animate page turn on book model
+// TODO import, animate book
+// TODO find bookshelf model
+// TODO add animated books
+// TODO textures in blender?
+// TODO change function parameters to an object

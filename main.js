@@ -9,14 +9,28 @@ async function main() {
 
   world.start();
 
-  // document.querySelector("#scene-container").addEventListener("click", () => {
-  //   const object = world.getObjectByName('book');
-  //   console.log(object);
-  //   object.position.x += 0.5
-  // });
-
-  document.querySelector("#scene-container").addEventListener("click", () => {
-    world.moveObjectSlow("book");
+  document.addEventListener('keydown', (event) => {
+    switch(event.key) {
+      case 's':
+        world.move('box1', { x: 0, y: -1, z: 0 });
+        break;
+      case 'd':
+        world.move('box1', { x: 1, y: 0, z: 0 });
+        break;
+      case 'a':
+        world.move('box1', { x: -1, y: 0, z: 0 });
+        break;
+      case 'w':
+        world.move('box1', { x: 0, y: 1, z: 0 });
+        break;
+      case 'ArrowLeft':
+        world.moveCamera90(-1);
+        break;
+      case 'ArrowRight':
+        world.moveCamera90(1);
+      default:
+        return;
+    }
   })
 }
 

@@ -1,5 +1,5 @@
 import { Clock } from 'three';
-
+import * as TWEEN from '@tweenjs/tween.js';
 const clock = new Clock();
 
 class Loop {
@@ -15,8 +15,8 @@ class Loop {
       // tell every animated object to tick forward one frame
       this.tick();
       // render a frame
+      
       this.renderer.render(this.scene, this.camera);
-
 
     });
   }
@@ -28,7 +28,7 @@ class Loop {
   tick() {
     // Get time since last frame render
     const delta = clock.getDelta();
-
+    TWEEN.update()
     // Each object animates itelf with its tick function
     for (const object of this.updatables) {
       object.tick(delta);
