@@ -88,7 +88,16 @@ class World {
       rotation: {x: 45, y: 45, z: 45},
     });
 
-    scene.add(box1, box2);
+    const box3 = createBox({
+      name: "box3",
+      interactionManager: interactionManager,
+      size: 1,
+      color: 'red',
+      position: {x: -3, y: 0, z: 0},
+      rotation: {x: 45, y: 45, z: 45},
+    });
+
+    scene.add(box1, box2, box3);
   }
 
   start() {
@@ -127,7 +136,7 @@ class World {
       angleFromZAxis = Number((360 - Math.abs(Math.atan(camera.position.x/camera.position.z)) * 180 / Math.PI).toFixed(4));
     }
     // add 10 degrees
-    const newAngle = (angleFromZAxis + 10) % 360;
+    // const newAngle = (angleFromZAxis + 10) % 360;
 
     // find radial length
     // console.log('cam: ', camera.position.x, camera.position.z);
@@ -137,6 +146,40 @@ class World {
     // // sin(angle) = x/radial
     // const newX = Number(Math.cos(degToRad(newAngle)).toFixed(4))*radialLength;
     // const newZ = Number(Math.sin(degToRad(newAngle)).toFixed(4))*radialLength;
+
+    let newAngle
+
+    if (angleFromZAxis > -10 && angleFromZAxis < 10) {
+      if (direction > 0) {
+        newAngle = 90;
+      } else if (direction < 0) {
+        newAngle = 270;
+      }
+    } else if (angleFromZAxis > 80 && angleFromZAxis < 100) {
+      if (direction > 0) {
+        newAngle = 180;
+      } else if (direction < 0) {
+        newAngle = 0;
+      }
+    } else if (angleFromZAxis > 170 && angleFromZAxis < 190) {
+      if (direction > 0) {
+        newAngle = 270;
+      } else if (direction < 0) {
+        newAngle = 90;
+      }
+    } else {
+      if (direction > 0) {
+        newAngle = 0;
+      } else if (direction < 0) {
+        newAngle = 180;
+      }
+    }
+
+    const newX = Math.sin(degToRad(newAngle))*radialLength;
+    const newZ = Math.cos(degToRad(newAngle))*radialLength;
+
+    camera.position.x = newX;
+    camera.position.z = newZ;
   }
 }
 
