@@ -39,7 +39,7 @@ class World {
       aspectRatio: renderer.domElement.width/renderer.domElement.height,
       near: 0.1,
       far: 1000,
-      position: { x: 0.1, y: 5, z: 10 }
+      position: { x: 0, y: 5, z: 10 }
     });
     scene = createScene();
     loop = new Loop(camera, scene, renderer);
@@ -135,51 +135,14 @@ class World {
     } else if (camera.position.z > 0 && camera.position.x <= 0) {
       angleFromZAxis = Number((360 - Math.abs(Math.atan(camera.position.x/camera.position.z)) * 180 / Math.PI).toFixed(4));
     }
-    // add 10 degrees
-    // const newAngle = (angleFromZAxis + 10) % 360;
 
     // find radial length
-    // console.log('cam: ', camera.position.x, camera.position.z);
     const radialLength = Math.sqrt(camera.position.x**2 + camera.position.z**2);
 
-    // // cos(angle) = z/radial
-    // // sin(angle) = x/radial
-    // const newX = Number(Math.cos(degToRad(newAngle)).toFixed(4))*radialLength;
-    // const newZ = Number(Math.sin(degToRad(newAngle)).toFixed(4))*radialLength;
+    const delta = direction === 'left' ? -1 : 1;
 
-    let newAngle
-
-    if (angleFromZAxis > -10 && angleFromZAxis < 10) {
-      if (direction > 0) {
-        newAngle = 90;
-      } else if (direction < 0) {
-        newAngle = 270;
-      }
-    } else if (angleFromZAxis > 80 && angleFromZAxis < 100) {
-      if (direction > 0) {
-        newAngle = 180;
-      } else if (direction < 0) {
-        newAngle = 0;
-      }
-    } else if (angleFromZAxis > 170 && angleFromZAxis < 190) {
-      if (direction > 0) {
-        newAngle = 270;
-      } else if (direction < 0) {
-        newAngle = 90;
-      }
-    } else {
-      if (direction > 0) {
-        newAngle = 0;
-      } else if (direction < 0) {
-        newAngle = 180;
-      }
-    }
-
-    const newX = Math.sin(degToRad(newAngle))*radialLength;
-    const newZ = Math.cos(degToRad(newAngle))*radialLength;
-
-    camera.position.x = newX;
-    camera.position.z = newZ;
+    camera.position.x = Math.sin(degToRad((angleFromZAxis+delta)%360))*radialLength;
+    camera.position.z = Math.cos(degToRad((angleFromZAxis+delta)%360))*radialLength;
   }
 }
 

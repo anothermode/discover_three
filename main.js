@@ -24,10 +24,10 @@ async function main() {
         world.move('box1', { x: 0, y: 1, z: 0 });
         break;
       case 'ArrowLeft':
-        world.moveCamera90(-1);
+        world.moveCamera90('left');
         break;
       case 'ArrowRight':
-        world.moveCamera90(1);
+        world.moveCamera90('right');
       default:
         return;
     }
